@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 CPU_Brand_CHOICES = [
     ('Intel', 'Intel'),
@@ -129,6 +130,7 @@ class Memory(models.Model):
     memory_type = models.ForeignKey(MemoryType, on_delete=models.CASCADE, related_name='memory')
     total_capacity = models.IntegerField()  # in GB
     single_capacity = models.IntegerField()  # in GB
+    quantity = models.IntegerField(default=1)
     bus = models.IntegerField()  # in MHz
     cas = models.CharField(max_length=20)  # CAS latency
     estimated_price = models.DecimalField(max_digits=20, decimal_places=2, blank=True, null=True)
@@ -197,7 +199,6 @@ class PowerSupply(models.Model):
     pcie12 = models.IntegerField(default=0)  # Number of PCIe 12-pin connectors
     pcie8 = models.IntegerField(default=0)  # Number of PCIe 8-pin connectors
     pcie6 = models.IntegerField(default=0)  # Number of PCIe 6-pin connectors
-    pcie62 = models.IntegerField(default=0)  # Number of PCIe 6+2 pin connectors
     sata = models.IntegerField(default=0)  # Number of SATA connectors
     molex = models.IntegerField(default=0)  # Number of Molex connectors
     description = models.TextField(blank=True, null=True)
@@ -208,6 +209,23 @@ class PowerSupply(models.Model):
         verbose_name_plural = "PSU"
         ordering = ['-estimated_price', 'wattage', 'rating', 'brand']
         
+class Build(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid5,editable=False, verbose_name="Build ID")
+    name = models.CharField(max_length=200, verbose_name="Build name")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Crated at")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Last Update At")
+    #Component
+    cpu = models.ForeignKey(CPU, on_delete=models.SET_NULL, null=True, blank=True, related_name="Builds", verbose_name="CPU")
+    cpu_cooler = models.ForeignKey(CPUCooler, on_delete=models.SET_NULL, null=True, blank = True, related_name="Builds", verbose_name="CPU Cooler")
+    motherboard = models.ForeignKey(Motherboard, on_delete=models.SET_NULL, null=True, blank=True, related_name="Builds", verbose_name="Motherboard")
+    memory = models.ManyToManyField(Memory, related_name="Builds", verbose_name="Memory")
+    graphic_card = models.ForeignKey(GraphicsCard, on_delete=models.SET_NULL, null=True, blank=True, related_name="Builds", verbose_name="Graphic Card")
+    storage = models.ManyToManyField(Storage, related_name="Builds", verbose_name="Storage")
+    power_supply = models.ForeignKey(PowerSupply, on_delete=models.SET_NULL, null=True, blank=True, related_name="Builds", verbose_name="Power Supply")
 
+    class Meta:
+        verbose_name = "PC Build"
+        verbose_name_plural = "PC Build"
+        ordering = ['updated_at']
 
     
